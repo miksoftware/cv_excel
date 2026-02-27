@@ -22,7 +22,7 @@ class ExcelController extends Controller
     {
         $request->validate(['password' => 'required']);
 
-        if ($request->password === env('APP_ACCESS_PASSWORD')) {
+        if ($request->password === config('app.access_password')) {
             session(['access_granted' => true]);
             return redirect('/');
         }
@@ -48,7 +48,7 @@ class ExcelController extends Controller
             'new_password' => 'required|min:4',
         ]);
 
-        if ($request->current_password !== env('APP_ACCESS_PASSWORD')) {
+        if ($request->current_password !== config('app.access_password')) {
             return response()->json(['error' => 'Clave actual incorrecta.'], 422);
         }
 
@@ -62,10 +62,8 @@ class ExcelController extends Controller
         );
         file_put_contents($envPath, $envContent);
 
-        // Limpiar config cache
-        if (function_exists('opcache_reset')) {
-            opcache_reset();
-        }
+        // Limpiar cache de config para que tome el nuevo valor
+        \Artisan::call('config:clear');
 
         return response()->json(['success' => true]);
     }

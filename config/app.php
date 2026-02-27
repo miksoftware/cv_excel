@@ -123,4 +123,12 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Access Password
+    |--------------------------------------------------------------------------
+    */
+
+    'access_password' => env('APP_ACCESS_PASSWORD', 'clave123'),
+
 ];
