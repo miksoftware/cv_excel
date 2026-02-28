@@ -91,6 +91,7 @@ class ExcelController extends Controller
         $smsTtCol = null;
         $whatsappCol = null;
         $smsCdCol = null;
+        $gestorCol = null;
 
         for ($colIndex = 1; $colIndex <= $highestColIndex; $colIndex++) {
             $col = Coordinate::stringFromColumnIndex($colIndex);
@@ -105,6 +106,7 @@ class ExcelController extends Controller
             if (preg_match('/SMS[_ ]?TT/', $header)) $smsTtCol = $col;
             if (str_contains($header, 'WHATSAPP')) $whatsappCol = $col;
             if (preg_match('/SMS[_ ]?CD/', $header)) $smsCdCol = $col;
+            if (str_contains($header, 'GESTOR')) $gestorCol = $col;
 
             if (str_contains($header, 'TELEFONO') || str_contains($header, 'CELULAR') || str_contains($header, 'TEL')) {
                 $phoneCols[] = $col;
@@ -160,6 +162,7 @@ class ExcelController extends Controller
             $smsTt = $smsTtCol ? trim($sheetOrig->getCell($smsTtCol . $row)->getValue() ?? '') : '';
             $whatsapp = $whatsappCol ? trim($sheetOrig->getCell($whatsappCol . $row)->getValue() ?? '') : '';
             $smsCd = $smsCdCol ? trim($sheetOrig->getCell($smsCdCol . $row)->getValue() ?? '') : '';
+            $gestor = $gestorCol ? trim($sheetOrig->getCell($gestorCol . $row)->getValue() ?? '') : '';
             $codRefUnica = $cedula . '-' . $numObl;
 
             // Recolectar teléfonos únicos de esta fila
@@ -188,6 +191,7 @@ class ExcelController extends Controller
                     'calidad' => $calidad,
                     'largo' => strlen((string)$phone),
                     'cod_ref_unica' => $codRefUnica,
+                    'gestor' => $gestor,
                 ];
             }
         }
@@ -204,7 +208,8 @@ class ExcelController extends Controller
         $reportHeaders = [
             'EMPRESA', 'CEDULA', 'NUMERO_OBL', 'SMS_TT', 'WHATSAPP_MMS',
             'SMS_CD', 'TELEFONO_1_TT', 'CALIDAD_TERCERO', 'LARGO',
-            'CONTAR_REPETIDOS_#', 'COD_REFERENCIA_UNICA', 'CONTAR_REPETIDOS_OBL'
+            'CONTAR_REPETIDOS_#', 'COD_REFERENCIA_UNICA', 'CONTAR_REPETIDOS_OBL',
+            'GESTOR_ENCARGADO'
         ];
         foreach ($reportHeaders as $i => $h) {
             $sheet2->setCellValue(Coordinate::stringFromColumnIndex($i + 1) . '1', $h);
@@ -230,6 +235,8 @@ class ExcelController extends Controller
 
             $codRefSeq[$r['cod_ref_unica']] = ($codRefSeq[$r['cod_ref_unica']] ?? 0) + 1;
             $sheet2->setCellValue('L' . $rowNum, $codRefSeq[$r['cod_ref_unica']]);
+
+            $sheet2->setCellValue('M' . $rowNum, $r['gestor']);
             $rowNum++;
         }
 
