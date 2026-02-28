@@ -192,13 +192,9 @@ class ExcelController extends Controller
             }
         }
 
-        // Contar repetidos de teléfono y de cod_referencia_unica
-        $phoneCount = [];
-        $codRefCount = [];
-        foreach ($reportRows as $r) {
-            $phoneCount[$r['telefono']] = ($phoneCount[$r['telefono']] ?? 0) + 1;
-            $codRefCount[$r['cod_ref_unica']] = ($codRefCount[$r['cod_ref_unica']] ?? 0) + 1;
-        }
+        // Contadores secuenciales de teléfono y cod_referencia_unica
+        $phoneSeq = [];
+        $codRefSeq = [];
 
         // Crear el segundo Excel
         $spreadsheet2 = new Spreadsheet();
@@ -226,9 +222,14 @@ class ExcelController extends Controller
             $sheet2->setCellValueExplicit('G' . $rowNum, $r['telefono'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
             $sheet2->setCellValue('H' . $rowNum, $r['calidad']);
             $sheet2->setCellValue('I' . $rowNum, $r['largo']);
-            $sheet2->setCellValue('J' . $rowNum, $phoneCount[$r['telefono']]);
+
+            $phoneSeq[$r['telefono']] = ($phoneSeq[$r['telefono']] ?? 0) + 1;
+            $sheet2->setCellValue('J' . $rowNum, $phoneSeq[$r['telefono']]);
+
             $sheet2->setCellValueExplicit('K' . $rowNum, $r['cod_ref_unica'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            $sheet2->setCellValue('L' . $rowNum, $codRefCount[$r['cod_ref_unica']]);
+
+            $codRefSeq[$r['cod_ref_unica']] = ($codRefSeq[$r['cod_ref_unica']] ?? 0) + 1;
+            $sheet2->setCellValue('L' . $rowNum, $codRefSeq[$r['cod_ref_unica']]);
             $rowNum++;
         }
 
