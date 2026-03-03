@@ -180,6 +180,9 @@ class ExcelController extends Controller
             }
 
             foreach ($phonesInRow as $phone => $calidad) {
+                // Solo incluir teléfonos con largo >= 10 (los menores no son válidos)
+                if (strlen((string)$phone) < 10) continue;
+
                 $reportRows[] = [
                     'empresa' => $empresa,
                     'cedula' => $cedula,
@@ -245,7 +248,27 @@ class ExcelController extends Controller
         $writer2->save($tempFile2);
 
         // ============================================================
-        // Empaquetar ambos archivos en un ZIP
+        // ARCHIVO 3: CSV con TELEFONO y SMS según calidad
+        // ============================================================
+        $tempFile3 = tempnam(sys_get_temp_dir(), 'csv3_') . '.csv';
+        $csvHandle = fopen($tempFile3, 'w');
+
+        // BOM UTF-8 para compatibilidad con Excel
+        fwrite($csvHandle, "\xEF\xBB\xBF");
+
+        // Header
+        fputcsv($csvHandle, ['TELEFONO', 'SMS']);
+
+        // Datos: si es titular usa SMS_TT, si es codeudor usa SMS_CD
+        foreach ($reportRows as $r) {
+            $sms = $r['calidad'] === 'CODEUDOR_CD' ? $r['sms_cd'] : $r['sms_tt'];
+            fputcsv($csvHandle, [$r['telefono'], $sms]);
+        }
+
+        fclose($csvHandle);
+
+        // ============================================================
+        // Empaquetar los 3 archivos en un ZIP
         // ============================================================
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $zipFile = tempnam(sys_get_temp_dir(), 'zip_') . '.zip';
@@ -254,11 +277,13 @@ class ExcelController extends Controller
         $zip->open($zipFile, \ZipArchive::CREATE);
         $zip->addFile($tempFile1, $originalName . '_sin_duplicados.xlsx');
         $zip->addFile($tempFile2, $originalName . '_reporte_detallado.xlsx');
+        $zip->addFile($tempFile3, $originalName . '_telefono_sms.csv');
         $zip->close();
 
         // Limpiar temporales
         @unlink($tempFile1);
         @unlink($tempFile2);
+        @unlink($tempFile3);
 
         return response()->download($zipFile, $originalName . '_procesado.zip')->deleteFileAfterSend(true);
     }
